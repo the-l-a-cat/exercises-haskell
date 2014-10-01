@@ -1,13 +1,14 @@
 module Main where
 
 import Control.Monad 
+import Control.Arrow
 import qualified Data.ByteString.Lazy as L 
 import Network.HTTP.Conduit
 import Text.XML.HXT.Core
 
 main :: IO ()
 main =  parse target
-    >>= runX . transform
+    >>= runX . (<<<) transform
     >>= mapM_ putStrLn . take 5
 
 parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
@@ -16,9 +17,9 @@ parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . sim
 
 target = "https://hackage.haskell.org/packages/top"
 
-transform x =
-          (getChildren >>> removeWhiteSpace >>> getText)
-          <<< walk ["html", "body", "div", "div", "table", "tr", "td"] <<< x
+transform = walk ["html", "body", "div", "div", "table", "tr", "td"]
+        >>> getChildren
+        >>> removeWhiteSpace
+        >>> getText
 
-walk (tag:tags) = getChildren >>> isElem >>> hasName tag >>> walk tags 
-walk [] = arr (\x -> x)
+walk tags = foldr (>>>) returnA [ getChildren >>> isElem >>> hasName tag | tag <- tags ]
