@@ -7,12 +7,16 @@ import Network.HTTP.Conduit
 import Text.XML.HXT.Core
 
 main :: IO ()
-main  = mapM_ Prelude.putStrLn =<< $ parse "https://hackage.haskell.org/packages/top"
-        >>= runX . xshow . (>>> multi (hasName "a"))
-
+main =  parse target
+    >>= display {- . xshow -} . transform
     where
+
+    parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
+        where
         unchar8 = Prelude.map (toEnum . fromEnum) . unpack
-        parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
 
+    display xmltree = mapM_ Prelude.putStrLn =<< runX xmltree
 
+target = "https://g.co"
 
+transform x = x >>> getChildren >>> isElem >>> hasName "html" >>> getChildren >>> isElem >>> hasName "head" >>> getChildren >>> isElem >>> hasName "title" >>> getChildren >>> removeWhiteSpace >>> getText
