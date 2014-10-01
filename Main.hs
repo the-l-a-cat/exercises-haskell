@@ -1,22 +1,24 @@
 module Main where
 
 import Control.Monad 
-import Data.ByteString.Lazy
-
+import qualified Data.ByteString.Lazy as L 
 import Network.HTTP.Conduit
 import Text.XML.HXT.Core
 
 main :: IO ()
 main =  parse target
-    >>= display {- . xshow -} . transform
+    >>= runX . transform
+    >>= mapM_ putStrLn . take 5
+
+parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
     where
+    unchar8 = map (toEnum . fromEnum) . L.unpack
 
-    parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
-        where
-        unchar8 = Prelude.map (toEnum . fromEnum) . unpack
+target = "https://hackage.haskell.org/packages/top"
 
-    display xmltree = mapM_ Prelude.putStrLn =<< runX xmltree
+transform x =
+          (getChildren >>> removeWhiteSpace >>> getText)
+          <<< walk ["html", "body", "div", "div", "table", "tr", "td"] <<< x
 
-target = "https://g.co"
-
-transform x = x >>> getChildren >>> isElem >>> hasName "html" >>> getChildren >>> isElem >>> hasName "head" >>> getChildren >>> isElem >>> hasName "title" >>> getChildren >>> removeWhiteSpace >>> getText
+walk (tag:tags) = getChildren >>> isElem >>> hasName tag >>> walk tags 
+walk [] = arr (\x -> x)
