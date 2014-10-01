@@ -7,8 +7,8 @@ import Network.HTTP.Conduit
 import Text.XML.HXT.Core
 
 main :: IO ()
-main  = parse "https://hackage.haskell.org/packages/top"
-    >>= mapM_ Prelude.putStrLn =<< runX . xshow . (>>> multi (hasName "a"))
+main  = mapM_ Prelude.putStrLn =<< $ parse "https://hackage.haskell.org/packages/top"
+        >>= runX . xshow . (>>> multi (hasName "a"))
 
     where
         unchar8 = Prelude.map (toEnum . fromEnum) . unpack
