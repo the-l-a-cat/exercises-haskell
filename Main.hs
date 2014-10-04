@@ -11,10 +11,12 @@ main = do
     page <- parse url
     links <- runX $ getContentsFromPath pathToLinks <<< page
     counters <- runX $ getContentsFromPath pathToCounters <<< page
-    (mapM_ putStrLn . take 5) (formatReport links counters)
+    printResult' (formatReport links counters)
         where
         formatReport names numbers = map formatReportLine (zip names numbers)
         formatReportLine (name, number) = name ++ " \t -> \t " ++ number
+        printResult = mapM_ putStrLn . take 5
+        printResult' = print
 
         
 
