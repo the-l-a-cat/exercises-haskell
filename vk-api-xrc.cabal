@@ -62,6 +62,8 @@ executable vk-api-xrc
                        hxt >=9.3.1.7,
                        http-conduit,
                        bytestring
+
+
   
   -- Directories containing source files.
   -- hs-source-dirs:      
