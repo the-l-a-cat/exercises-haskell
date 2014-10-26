@@ -12,11 +12,19 @@ import TagsLexer
 import qualified TagsParser
 
 main :: IO ()
-main = do
-    page <- parse url
-    printResult =<< (runX $ page >>> walkA tagPathSomewhere >>> putXmlTree "-" //> getText)
+main = parse url
+    >>= (\x -> runX $ x >>> walkA tagPathSomewhere >>> getAttrValue "href")
+    >>= return . map ("https://vk.com/"++) . (take 5)
+    >>= mapM printAside
+    >>= mapM parse
+    >>= (\x -> runX $ head x >>> putXmlTree "_" >>> walkA_string "div.dev_sett_block" >>> getText )
+    >>= printResult
+
         where
         printResult = mapM_ putStrLn
+        printAside x = putStrLn x >> return x
+        -- chainMonad list = foldr (=<<) (head list) (tail list)
+        -- chainArrow = foldr (>>>) Control.Arrow.zeroArrow
 
         
 
@@ -26,9 +34,11 @@ parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . sim
 
 -- url = "https://g.co"
 url            = "http://vk.com/dev/methods" 
-tagString      = "span.dev_methods_list_span"
+tagString      = "a.dev_methods_list_row"
 -- tagString = "html script"
 tagPathSomewhere = (TagsParser.parse . TagsLexer.alexScanTokens) tagString
+
+walkA_string = walkA . TagsParser.parse . TagsLexer.alexScanTokens
 
 
 walk tags = foldr (>>>) returnA [ getChildren >>> isElem >>> hasName tag | tag <- tags ]
