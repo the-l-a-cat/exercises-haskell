@@ -1,8 +1,8 @@
 module Main where
 
-import Control.Monad 
+import Control.Monad
 import Control.Arrow
-import qualified Data.ByteString.Lazy as L 
+import qualified Data.ByteString.Lazy as L
 import Network.HTTP.Conduit
 import Text.XML.HXT.Core
 import Data.List
@@ -26,14 +26,13 @@ main = parse url
         -- chainMonad list = foldr (=<<) (head list) (tail list)
         -- chainArrow = foldr (>>>) Control.Arrow.zeroArrow
 
-        
 
 parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
     where
     unchar8 = map (toEnum . fromEnum) . L.unpack
 
 -- url = "https://g.co"
-url            = "http://vk.com/dev/methods" 
+url            = "http://vk.com/dev/methods"
 tagString      = "a.dev_methods_list_row"
 -- tagString = "html script"
 tagPathSomewhere = (TagsParser.parse . TagsLexer.alexScanTokens) tagString
@@ -48,5 +47,5 @@ walkA tags = foldr (>>>) returnA [ (getChildren) >>> isElem >>> deep (tagTest ta
     where
     tagTest tag = hasName (tagName tag) >>> foldr (>>>) returnA
         [ hasAttrValue (attrName attr) (== attrValue attr) | attr <- tagAttrs tag ]
-        
+
 
