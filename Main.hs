@@ -17,7 +17,8 @@ main = parse url
     >>= return . map ("https://vk.com/"++) . (take 5)
     >>= mapM printAside
     >>= mapM parse
-    >>= (\x -> runX $ head x >>> putXmlTree "_" >>> walkA_string "div.dev_sett_block" >>> getText )
+    -- >>= (\x -> runX $ head x >>> putXmlTree "_" >>> walkA_string "div.dev_sett_block" >>> getText )
+    >>= \x -> renderArrow [ x !! 2 , putXmlTree "_", walkA_string "div.dev_sett_block" ] getText
     >>= printResult
 
         where
@@ -25,6 +26,8 @@ main = parse url
         printAside x = putStrLn x >> return x
         -- chainMonad list = foldr (=<<) (head list) (tail list)
         -- chainArrow = foldr (>>>) Control.Arrow.zeroArrow
+        renderArrow list renderF = runX $ foldr (>>>) returnA list >>> renderF
+
 
 
 parse = liftM (readString [withParseHTML yes, withWarnings no] . unchar8 ) . simpleHttp
